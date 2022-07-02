@@ -4,7 +4,7 @@ EPS = np.finfo(np.float64).eps
 
 
 def to_categorical(labels):
-    n_classes = labels.max()+1
+    n_classes = labels.max() + 1
     y = np.zeros((labels.shape[0], n_classes))
 
     for i in range(labels.shape[0]):
@@ -35,7 +35,7 @@ def softmax(x):
     x = x - x.max(axis=1).reshape((-1, 1))
     exp = np.exp(x)
     s = np.sum(exp, axis=1).reshape((-1, 1))
-    return exp/(s+EPS)
+    return exp / (s+EPS)
 
 
 def d_softmax(x):
@@ -48,19 +48,19 @@ def d_softmax(x):
 
 
 def mean_squared_error(y_pred, y_true):
-    return np.mean((y_pred-y_true)**2, axis=1).reshape((-1, 1))
+    return np.mean((y_pred - y_true)**2, axis=1).reshape((-1, 1))
 
 
 def d_mean_squared_error(y_pred, y_true):
-    return np.expand_dims((2/y_pred.shape[1])*(y_pred-y_true), 1)
+    return np.expand_dims((2 / y_pred.shape[1]) * (y_pred - y_true), 1)
 
 
 def categorical_crossentropy(y_pred, y_true):
-    return -np.log(np.sum(y_true*y_pred, axis=1)+EPS)
+    return -np.log(np.sum(y_true * y_pred, axis=1) + EPS)
 
 
 def d_categorical_crossentropy(y_pred, y_true):
-    return np.expand_dims(-y_true/(y_pred+EPS), 1)
+    return np.expand_dims(-y_true / (y_pred + EPS), 1)
 
 # Optimizers
 
@@ -74,7 +74,7 @@ class SGD:
         if not hasattr(self, 'delta_params'):
             self.delta_params = np.zeros_like(old_params)
 
-        self.delta_params = self.momentum*self.delta_params - self.learning_rate*gradient
+        self.delta_params = self.momentum * self.delta_params - self.learning_rate * gradient
         new_params = old_params + self.delta_params
 
         return new_params
@@ -117,7 +117,7 @@ class NeuralNetwork:
         nrows = layers[0]
         for i in range(1, self.nlayers):
             ncols = layers[i]
-            std_dev = np.sqrt(1/(nrows+ncols))  # Xavier initialization
+            std_dev = np.sqrt(1 / (nrows + ncols))  # Xavier initialization
             self.weights.append(np.random.normal(
                 size=(nrows, ncols), scale=std_dev))
             self.biases.append(np.random.normal(
@@ -143,7 +143,7 @@ class NeuralNetwork:
         for i in range(1, self.nlayers):
             nrows = self.layers[i-1]
             ncols = self.layers[i]
-            end = start+nrows*ncols
+            end = start + nrows * ncols
             p = params[start:end]
             W = p.reshape((nrows, ncols))
             weights.append(W)
@@ -151,7 +151,7 @@ class NeuralNetwork:
 
         for i in range(1, self.nlayers):
             ncols = self.layers[i]
-            end = start+ncols
+            end = start + ncols
             p = params[start:end]
             b = p.reshape((1, ncols))
             biases.append(b)
@@ -163,14 +163,15 @@ class NeuralNetwork:
         io_arrays = []
         for i in range(self.nlayers):
             if i > 0:
-                x = np.matmul(x, self.weights[i-1]) + self.biases[i-1]
+                x = np.matmul(x, self.weights[i - 1]) + self.biases[i - 1]
             layer_io = [x]  # input to layer i
-            if i == self.nlayers-1:
+            if i == self.nlayers - 1:
                 activation = self.output_activation[0]
             elif i > 0:
                 activation = self.hidden_activation[0]
             else:
-                def activation(v): return v
+                def activation(v):
+                    return v
             x = activation(x)
             layer_io.append(x)  # output of layer i
             io_arrays.append(layer_io)
@@ -182,17 +183,17 @@ class NeuralNetwork:
         batch_size = y_true.shape[0]
         d_weights = []
         d_biases = []
-        for i in range(self.nlayers-1, 0, -1):
-            if i == self.nlayers-1:
+        for i in range(self.nlayers - 1, 0, -1):
+            if i == self.nlayers - 1:
                 e = np.matmul(e, self.output_activation[1](io_arrays[i][0]))
                 e = np.squeeze(e, 1)
             else:
                 e = e * self.hidden_activation[1](io_arrays[i][0])
-            d_w = np.matmul(io_arrays[i-1][1].transpose(), e)/batch_size
+            d_w = np.matmul(io_arrays[i - 1][1].transpose(), e) / batch_size
             d_b = np.mean(e, axis=0)
             d_weights.append(d_w)
             d_biases.append(d_b)
-            e = np.matmul(e, self.weights[i-1].transpose())
+            e = np.matmul(e, self.weights[i - 1].transpose())
 
         d_weights.reverse()
         d_biases.reverse()
@@ -213,11 +214,11 @@ class NeuralNetwork:
             np.random.shuffle(xy)
             x, y = np.split(xy, [-y_ncols], axis=1)
 
-            print(f'Epoch {i+1}/{epochs}\n')
+            print(f'Epoch {i + 1}/{epochs}\n')
             start = 0
             loss_hist = []
             while start < n_samples:
-                end = min(start+batch_size, n_samples)
+                end = min(start + batch_size, n_samples)
                 x_batch = x[start:end, :]
                 y_batch = y[start:end, :]
 
