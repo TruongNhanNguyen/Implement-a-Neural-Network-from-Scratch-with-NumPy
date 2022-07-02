@@ -4,6 +4,8 @@ EPS = np.finfo(np.float64).eps
 
 
 def to_categorical(labels):
+    """Convert class labels in classsification tasks to one-hot
+    encoding"""
     n_classes = labels.max() + 1
     y = np.zeros((labels.shape[0], n_classes))
 
@@ -16,22 +18,27 @@ def to_categorical(labels):
 
 
 def identity(x):
+    """Output activation function `identity`"""
     return x
 
 
 def d_identity(x):
+    """Derivative of output activation function `identity`."""
     return np.tile(np.identity(x.shape[1]), (x.shape[0], 1, 1))
 
 
 def relu(x):
+    """Hidden activation function `ReLU`."""
     return np.maximum(x, 0)
 
 
 def d_relu(x):
+    """Derivative activation function `ReLU`."""
     return np.vectorize(lambda v: 1 if v > 0 else 0)(x)
 
 
 def softmax(x):
+    """Output activation function `softmax`"""
     x = x - x.max(axis=1).reshape((-1, 1))
     exp = np.exp(x)
     s = np.sum(exp, axis=1).reshape((-1, 1))
@@ -39,6 +46,7 @@ def softmax(x):
 
 
 def d_softmax(x):
+    """Derivative of output activation function `identity`"""
     s = softmax(x)
     D = np.stack([np.diag(s[i, :]) for i in range(s.shape[0])], axis=0)
     comb = np.matmul(np.expand_dims(s, 2), np.expand_dims(s, 1))
@@ -66,11 +74,20 @@ def d_categorical_crossentropy(y_pred, y_true):
 
 
 class SGD:
+    """Stochastic gradient descent with momentum as an 
+    optimization method. But you can adapt other optimizers
+    such as `Adam`, `RMSprop`, `Adagrad` to the `Neural Network` class
+    by using `.update(old_params, gradient)` method. It returns the
+    updated parameters."""
     def __init__(self, learning_rate=0.01, momentum=0.0):
         self.learning_rate = learning_rate
         self.momentum = momentum
 
     def update(self, old_params, gradient):
+        """Returns the updated parameters. The neural network class will 
+        receive an optimizer as a parameter. So, someone who wants to use 
+        other optimization methods can create a class with the required 
+        interface and pass it to the neural network class when instantiating."""
         if not hasattr(self, 'delta_params'):
             self.delta_params = np.zeros_like(old_params)
 
@@ -125,6 +142,8 @@ class NeuralNetwork:
             nrows = ncols
 
     def __flatten_params(self, weights, biases):
+        """Method that transforms the list of weights matrices, and biases
+        vectors received as input, to a flattened vector."""
         params = []
         for W in weights:
             params.append(W.flatten())
@@ -136,6 +155,9 @@ class NeuralNetwork:
         return params
 
     def __restore_params(self, params):
+        """Method that returns a flattened vector if parameters back into 
+        list of weights and biases.
+        """
         weights = []
         biases = []
 
@@ -160,6 +182,9 @@ class NeuralNetwork:
         return (weights, biases)
 
     def __forward(self, x):
+        """Method passes the input array x through the network and while 
+        it does so, it keeps track of the input and output arrays to and 
+        from each layer. """
         io_arrays = []
         for i in range(self.nlayers):
             if i > 0:
@@ -178,6 +203,12 @@ class NeuralNetwork:
         return io_arrays
 
     def __backward(self, io_arrays, y_true):
+        """Method computes the gradient. It takes as input a list of the
+        form returned by the `.__forward(x)` method and an array with the
+        ground truth y. It computes the gradient of weights and biases 
+        using the backpropagation algorithm. Then it returns a tuple
+        (d_weights, d_biases).
+        """
         e = self.loss[1](io_arrays[-1][1], y_true)
 
         batch_size = y_true.shape[0]
@@ -201,6 +232,25 @@ class NeuralNetwork:
         return (d_weights, d_biases)
 
     def fit(self, x, y, batch_size, epochs, categorical=False):
+        """
+        The method that orchestrates all the training is
+        `.fit(x, y, batch_size, epochs, categorical)`, where:
+            - `x` is the input data
+            - `y` is the ground truth
+            - `batch_size` is the size of a batch of data
+            - `epochs` is the number of iterations through \
+                all the input data
+            - `categorical` is an optional parameter that, when set to true \
+                will convert `y` to one-hot encoding
+        For each batch of data, it uses `.__forward()` and `.__backward()` 
+        methods to compute the gradient then flatten the current parameters
+        of the network and the gradient using `.__flatten_params()`.
+        After that, computes the new parameters using `self.optimizer.update()`, 
+        then restores that returned vector to the right format with `.__restore_params()`
+        and assigns that to `self.weights`, `self.biases`. At the end of each batch, the 
+        progress and average loss are printed. A list of all the loss values at the end of
+        each epoch is maintained and returned.
+        """
         if categorical:
             y = to_categorical(y)
 
@@ -243,6 +293,10 @@ class NeuralNetwork:
         return np.array(epoch_loss)
 
     def predict(self, x, labels=False):
+        """Method will return the exact values that are in the output nodes
+        after the input x is passed through the network. If the labels 
+        parameter is set to true, then the predicted labels are returned.
+        """
         if len(x.shape) == 1:
             x = np.expand_dims(x, 0)
 
@@ -254,6 +308,12 @@ class NeuralNetwork:
             return output
 
     def score(self, x, y, accuracy=False):
+        """Returns by default the average loss. If accuracy is set to true, 
+        then the accuracy will be returned. Note that in a classification 
+        problem, if you want the loss then y should be provided in one-hot 
+        encoding format, otherwise, if you want accuracy to be returned 
+        then y should be regular class labels.
+        """
         if accuracy:
             return np.mean(self.predict(x, True) == y)
         else:
