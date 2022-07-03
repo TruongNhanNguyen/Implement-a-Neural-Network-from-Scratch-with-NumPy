@@ -26,9 +26,9 @@ Now, let us start with the code of the NeuralNetwork class. The instantiation me
 
 Then, it initializes its weights and biases using a variant of the *Xavier* initialization method. That is, we draw the weights and biases from a normal distribution with mean 0 and standard deviation of
 
-$$\sigma = \sqrt{\dfrac{1}{\text{fan\_int} + \text{fan\_out}}}$$
+$$\sigma = \sqrt{\dfrac{1}{\text{fan in} + \text{fan out}}}$$
 
-where `fan_in` and `fan_out` are the number of nodes in the previous layer, respectively the number of neurons in the next layer. The number of rows in weights matrices matches the number of nodes in the previous layer, and the number of columns matches the number of nodes in the next layer. The biases are row vectors with the number of elements matching the number of nodes in the next layer.
+where `fan in` and `fan out` are the number of nodes in the previous layer, respectively the number of neurons in the next layer. The number of rows in weights matrices matches the number of nodes in the previous layer, and the number of columns matches the number of nodes in the next layer. The biases are row vectors with the number of elements matching the number of nodes in the next layer.
 
 To easily do the parameters update procedure we will create a `.__flatten_params(weights, biases)` method that transforms the list of weight matrices, and bias vectors received as input, to a flattened vector. We will also need a `.__restore_params(params)` method that turns a flattened vector of parameters back into lists of weights and biases. Note that the 2 underscores in front of the method name just means that the method is private in OOP terms. This just means that the method should be used only from inside the class.
 
