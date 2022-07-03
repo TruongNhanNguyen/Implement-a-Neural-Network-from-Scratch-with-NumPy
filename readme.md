@@ -2,7 +2,11 @@
 
 ![Implement a Neural Network from scratch with NumPy](asset/images/Impement%20NN%20from%20scratch%20with%20NumPy.png)
 
+## Introduction
+
 The best way to really understand how a neural network works is to implement one from scratch. That is exactly what I am going to do in this project. I will create a neural network class and design it in such a way to be more flexible. I don't wish to hardcode in it a specific activation of loss functions, or optimizer (that is SGD, Adam Boost or other Gradient-based mothods). The neural network will be designed to receive from outside the class so thar one can just take the class's code and pass to it whatever activation/loss/optimizer class that they wish to use hear as seperate things from `Neural Network` class. And we need both activation/loss functions and their derivatives.
+
+## Activation functions
 
 To allow batch sizes greater than 1, the activation and loss functions should handle matrix input. Rows in these matrices will represent different data points, and the columns will be features. The network will allow for 2 kinds of activation functions: for hidden layers and the output layer. The hidden layer activations should operate on their input vectors elementwise, and thus their derivatives will also be elementwise, returning one vector for each data point. But the output activation should allow for each element in the output vector to be computed based on all the elements in the input vector. That is to be able to use *softmax* activation. Because of this, their derivatives needs to return a *Jacobian* matrix (a matrix consisting of the partial derivatives of each output function w.r.t. each of the input component; you can read more on Wikipedia) for each data point.
 
@@ -10,11 +14,21 @@ Here we will use only ReLU as hidden activation; identity and softmax will be us
 
 We used the `EPS` variable, which is the smallest positive representable number of `float64` type, to avoid division by 0. To avoid overflow errors in the `softmax` function, we subtracted the maximum of each data point from the input. We are allowed to do that because it does not change the output of the function as it has the same effect as dividing both terms of that fraction by the same amount.
 
+## Loss functions
+
 The loss functions should take as input 2 matrices: the *predicted y* and *true y*, both of them of the same form as in the activation functions. These loss functions should output a single number for each data point. Their derivatives should output a row-vector for each data point, all of them stacked into an array of dimension 3. This output shape is required to be able to use NumPy’s `matmul()` function to multiply with the derivative of output activation. Note the use of `expand_dims()` function which is used to return the required shape.
+
+## Optimizers
 
 Here we will use only stochastic gradient descent with momentum as an optimization method, but there are more gradient-based methods out there. Some popular choices are *Adam*, *RMSprop*, *Adagrad*. To allow the neural network class to work with all of these, we will implement the optimizer as a separate class with a `.update(old_params, gradient)` method that returns the updated parameters. The neural network class will receive an optimizer as a parameter. So, someone who wants to use other optimization methods can create a class with the required interface and pass it to the neural network class when instantiating.
 
+## Utilities
+
 To convert class labels in classification tasks to one-hot encoding we will use the `to_categorical()` utility function.
+
+## Neural Network class
+
+### Overview
 
 Now, let us start with the code of the NeuralNetwork class. The instantiation method expects the following parameters
 
@@ -29,6 +43,8 @@ Then, it initializes its weights and biases using a variant of the *Xavier* init
 $$\sigma = \sqrt{\dfrac{1}{\text{fan in} + \text{fan out}}}$$
 
 where `fan in` and `fan out` are the number of nodes in the previous layer, respectively the number of neurons in the next layer. The number of rows in weights matrices matches the number of nodes in the previous layer, and the number of columns matches the number of nodes in the next layer. The biases are row vectors with the number of elements matching the number of nodes in the next layer.
+
+### Internal instructions
 
 To easily do the parameters update procedure we will create a `.__flatten_params(weights, biases)` method that transforms the list of weight matrices, and bias vectors received as input, to a flattened vector. We will also need a `.__restore_params(params)` method that turns a flattened vector of parameters back into lists of weights and biases. Note that the 2 underscores in front of the method name just means that the method is private in OOP terms. This just means that the method should be used only from inside the class.
 
@@ -50,4 +66,4 @@ By default, the `.predict()` method will return the exact values that are in the
 
 The `.score()` method returns by default the average loss. If accuracy is set to true, then the accuracy will be returned. Note that in a classification problem, if you want the loss then y should be provided in one-hot encoding format, otherwise, if you want accuracy to be returned then y should be regular class labels.
 
-Finally, we want to be able to save the parameters locally, so that we do not have to train our models each time we want to make a prediction. Note that the below methods can save and load just the weights and biases, but not the whole information about the layers, activations, loss function, and optimizer. So, you should also save the code used to instantiate the neural network.
+Finally, we want to be able to save the parameters locally, so that we do not have to train our models each time we want to make a prediction. Note that the above methods can save and load just the weights and biases, but not the whole information about the layers, activations, loss function, and optimizer. So, you should also save the code used to instantiate the neural network.
